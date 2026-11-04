@@ -40,4 +40,5 @@ Investigación de incidencias en la venta de entradas (SO-2026-041). Python + pa
 | tickets | `02_analisis_tickets.ipynb` | |
 | reservations | | |
 | system_changes | | |
-| concerts + customers | | |
+| concerts | `03_analisis_concerts.ipynb` | _(Daniel)_ |
+| customers | | |
