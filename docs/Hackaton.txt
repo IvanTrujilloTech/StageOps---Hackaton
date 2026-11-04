@@ -327,6 +327,8 @@ Una lectura inicial atribuía el problema solo al cambio de regla; por concierto
 La entrada se emite siempre 2 s tras la primera recepción (176\,562 de 176\,562); las tardías tardan 516 a 1063 s y ninguna normal pasa de 355 s. & Regularidad propia de datos de simulación; no se extrapola a sistemas reales. & Tomar la primera recepción como reloj de la regla y no sobreinterpretar la regularidad. \\
 Hay 10\,745 reservas sin pago. & Caducaron sin confirmación, coherente con el encargo, aunque ningún registro lo prueba de forma independiente. & Clasificarlas como correctas y marcarlo como interpretación. \\
 \code{customer\_id} identifica al comprador, no a cada asistente. & Un comprador puede aparecer en varias reservas. & Contar \code{customer\_id} distintos y llamarlos compradores, no personas. \\
+\code{customer\_id} tiene un tipo de id que no parece funcionar & \code{customer\_id} parece ser el tipo de id incremental, no obstante tiene entradas vacías donde no debería ser así. Ej: CLI-000002 salta a CLI-000009 & Esta decisión NO ha sido tomada: La empresa contratante podría pedir que se modifiquen la generación de \code{customer\_id} siguientes para que no aparezcan estos saltos de filas
+\\
 \bottomrule
 \end{tabularx}
 \end{table}
