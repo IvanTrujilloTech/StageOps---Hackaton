@@ -8,7 +8,7 @@ Investigación de incidencias en la venta de entradas (SO-2026-041). Python + pa
 ├── data/
 │   ├── raw/       # CSV originales: NO se modifican
 │   ├── work/      # copias de trabajo
-│   └── clean/     # salidas de la limpieza (ignorado por git, se regenera)
+│   └── clean/     # salidas de la limpieza (versionadas; se regeneran ejecutando cada notebook)
 ├── notebooks/     # notebooks numerados, uno por CSV / análisis
 ├── src/stageops/  # código reutilizable
 ├── tests/  docs/  report/  outputs/  enunciado/
@@ -39,6 +39,6 @@ Investigación de incidencias en la venta de entradas (SO-2026-041). Python + pa
 | payment_events | `01_analisis_payment_events.ipynb` | _(Daniel)_ |
 | tickets | `02_analisis_tickets.ipynb` | |
 | reservations | | |
-| system_changes | | |
+| system_changes | `04_analisis_system_changes.ipynb` | _(Daniel)_ |
 | concerts | `03_analisis_concerts.ipynb` | _(Daniel)_ |
 | customers | | |

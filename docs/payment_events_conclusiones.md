@@ -1,6 +1,6 @@
 # payment_events: conclusiones y guía de uso de los CSV limpios
 
-Origen: `data/raw/payment_events.csv` · Notebook: `notebooks/01_analisis_payment_events.ipynb` · Salidas en `data/clean/` (se regeneran ejecutando el notebook).
+Origen: `data/raw/payment_events.csv` · Notebook: `notebooks/01_analisis_payment_events.ipynb` · Salidas en `data/clean/` (versionadas en git; se regeneran ejecutando el notebook).
 
 ## 1. Resumen en una frase
 
