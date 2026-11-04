@@ -17,9 +17,10 @@ Investigación de incidencias en la venta de entradas (SO-2026-041). Python + pa
 
 ## Convención para los notebooks
 
-- Ubicación: `notebooks/NN_<descripcion>.ipynb`.
-- Usa [01_limpieza_payment_events.ipynb](notebooks/01_limpieza_payment_events.ipynb) como plantilla:
-  cargar → inspeccionar → tipar → validar → exportar.
+- Nombre: `notebooks/NN_analisis_<csv>.ipynb` (p. ej. `01_analisis_payment_events.ipynb`).
+- Usa [01_analisis_payment_events.ipynb](notebooks/01_analisis_payment_events.ipynb) como plantilla de estilo:
+  contexto → método → importaciones → inspección → tipado → validaciones → claves/cardinalidades → tablas limpias → `assert` → exportación → reflexión.
+  Texto en español, un bloque markdown que explica antes de cada bloque de código y otro que concluye después.
 - Entrada: `data/raw/<csv>`. Lectura con `encoding="utf-8-sig"` (los CSV traen BOM).
 - Fechas en UTC: `pd.to_datetime(..., utc=True)`.
 - No borrar filas sin justificarlo: marcar con una columna (p. ej. `is_retry`) y documentar la decisión de conteo en una celda markdown.
@@ -35,7 +36,7 @@ Investigación de incidencias en la venta de entradas (SO-2026-041). Python + pa
 
 | CSV | Notebook | Responsable |
 |---|---|---|
-| payment_events | `01_limpieza_payment_events.ipynb` | _(Daniel)_ |
+| payment_events | `01_analisis_payment_events.ipynb` | _(Daniel)_ |
 | tickets | `02_analisis_tickets.ipynb` | |
 | reservations | | |
 | system_changes | | |
