@@ -1,0 +1,15 @@
+# Datos limpios: se regeneran ejecutando cada notebook
+data/clean/
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
