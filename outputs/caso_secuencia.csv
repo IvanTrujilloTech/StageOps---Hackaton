@@ -1,0 +1,11 @@
+at_utc,event,reservation,seconds_from_start
+2026-10-16T10:20:22Z,Se crea la reserva y se bloquea la localidad,RES-0108527,0
+2026-10-16T10:23:21Z,La pasarela captura el cobro,RES-0108527,179
+2026-10-16T10:30:22Z,Caduca la reserva (la localidad queda libre),RES-0108527,600
+2026-10-16T10:30:32Z,Se crea la reserva y se bloquea la localidad,RES-0108528,610
+2026-10-16T10:33:16Z,La pasarela captura el cobro,RES-0108528,774
+2026-10-16T10:33:34Z,Ticketing recibe la confirmación,RES-0108527,792
+2026-10-16T10:33:36Z,Ticketing emite la entrada TKT-0101389,RES-0108527,794
+2026-10-16T10:36:59Z,Ticketing recibe la confirmación,RES-0108528,997
+2026-10-16T10:37:01Z,Ticketing emite la entrada TKT-0101390,RES-0108528,999
+2026-10-16T10:40:32Z,Caduca la reserva (la localidad queda libre),RES-0108528,1210

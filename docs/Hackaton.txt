@@ -1,0 +1,335 @@
+% Informe Hackatón StageOps (SO-2026-041) - Investigación de incidencias en la venta de entradas
+% Renombrar a informe.tex y compilar con pdflatex DOS veces (índice y referencias cruzadas) o con xelatex.
+%
+% Archivos que debe haber en la raíz del proyecto de Overleaf (junto a este .tex):
+%   informe_grafico_1.png    informe_grafico_2.png
+% Si una figura falta, el documento compila igualmente y muestra un recuadro «pendiente».
+% (Ambos PNG los genera el notebook 07_analisis_integracion.ipynb en la carpeta outputs/.)
+%
+% INTERRUPTOR DE LONGITUD (ver línea \entregafalse más abajo):
+%   \entregafalse -> versión completa: portada, resumen, índice, cuerpo de 2 páginas y anexos.
+%   \entregatrue  -> versión para entregar al cliente: cabecera compacta, resumen y cuerpo,
+%                    sin portada, índice ni anexos (el enunciado pide un PDF de una o dos páginas).
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[a4paper,top=1.6cm,bottom=1.7cm,left=1.8cm,right=1.8cm]{geometry}
+\usepackage{graphicx}
+\usepackage[table,dvipsnames]{xcolor}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{tikz}
+\usetikzlibrary{babel} % evita conflictos entre TikZ y los atajos de babel en español
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+
+% ---------- Interruptor de longitud ----------
+\newif\ifentrega
+\entregafalse % <- cambiar a \entregatrue para la versión de 2 páginas
+
+% ---------- Colores ----------
+\definecolor{azul}{HTML}{2F6DB5}
+\definecolor{rojo}{HTML}{D4452F}
+\definecolor{verde}{HTML}{2E8B57}
+\definecolor{ambar}{HTML}{C77D0A}
+\definecolor{gris}{HTML}{555555}
+
+\hypersetup{colorlinks=true,urlcolor=azul!70!black,linkcolor=azul!70!black,citecolor=azul!70!black}
+\captionsetup{font=footnotesize,labelfont=bf}
+\titleformat{\section}{\large\bfseries\color{azul}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{azul}}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{8pt plus 2pt minus 2pt}{3pt}
+\titlespacing*{\subsection}{0pt}{6pt plus 2pt minus 2pt}{2pt}
+\setlength{\emergencystretch}{2em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt plus 1pt minus 1pt}
+\renewcommand{\arraystretch}{1.1}
+\addto\captionsspanish{\renewcommand{\refname}{Referencias}}
+
+% ---------- Macros ----------
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\tabfont}{\renewcommand{\baselinestretch}{1}\fontsize{8}{9.6}\selectfont}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+% Incluye la figura solo si existe, para que el documento compile aunque falte alguna
+\newcommand{\figsi}[3]{\IfFileExists{#1}{\includegraphics[width=#2]{#1}}{\fbox{\parbox{\dimexpr#2-2\fboxsep-2\fboxrule\relax}{\centering\small\vspace{1.2cm}\textit{#3: pendiente}\vspace{1.2cm}}}}}
+% Caja de color con título: \begin{caja}[title={...}]{color} ... \end{caja}
+\newtcolorbox{caja}[2][]{colback=#2!6,colframe=#2!75!black,boxrule=0.5pt,arc=1.5mm,left=4pt,right=4pt,top=2.5pt,bottom=2.5pt,fonttitle=\bfseries\small,#1}
+% Tarjeta de cifra clave: \kpi{cifra}{descripción}{color}
+\newcommand{\kpi}[3]{\begin{minipage}[t]{0.235\textwidth}\begin{tcolorbox}[colback=#3!8,colframe=#3,boxrule=0.6pt,arc=1.5mm,left=3pt,right=3pt,top=3pt,bottom=3pt,halign=center]{\Large\bfseries\color{#3}#1}\\[-1pt]{\scriptsize #2}\end{tcolorbox}\end{minipage}}
+
+\title{Investigación de incidencias en la venta de entradas}
+\author{Daniel Esteban Uclés \and Gabriel Herrador \and Aitor Pérez \and Ivan Trujillo}
+\date{\today}
+
+\begin{document}
+\small
+
+% ============================ PORTADA / CABECERA ============================
+\ifentrega
+\begin{center}
+{\Large\bfseries\color{azul} Investigación de incidencias en la venta de entradas\par}
+\vspace{2pt}
+{\footnotesize Informe ejecutivo para la Dirección de Operaciones de StageOps $\cdot$ Expediente SO-2026-041 $\cdot$ Daniel Esteban Uclés, Gabriel Herrador, Aitor Pérez e Ivan Trujillo $\cdot$ \today\par}
+\end{center}
+\else
+\begin{titlepage}
+\centering
+\vspace*{\fill}
+{\color{azul}\rule{\textwidth}{2.2pt}}\par
+\vspace{0.6cm}
+{\Huge\bfseries\color{azul} Investigación de incidencias\\en la venta de entradas\par}
+\vspace{0.5cm}
+{\Large Informe ejecutivo para la Dirección de Operaciones de StageOps\par}
+\vspace{0.6cm}
+{\color{rojo}\rule{0.35\textwidth}{1.6pt}}\par
+\vspace{1.6cm}
+{\large Expediente SO-2026-041\par}
+\vspace{0.3cm}
+{\large Daniel Esteban Uclés, Gabriel Herrador, Aitor Pérez e Ivan Trujillo\par}
+\vspace{0.3cm}
+{\large M4 $\cdot$ Sistemes de Big Data $\cdot$ Hackatón HT1\par}
+\vspace{0.3cm}
+{\large \today\par}
+\vspace*{\fill}
+{\color{azul}\rule{\textwidth}{2.2pt}}\par
+\end{titlepage}
+\fi
+
+% ============================ RESUMEN ============================
+\begin{abstract}
+\begin{spacing}{1.05}
+Una compañía de ticketing\footnote{Ticketing: empresa que gestiona la reserva de butacas y la emisión de las entradas; aquí, LumaTicket y EntradaLink.} solo debe emitir una entrada si la confirmación del pago llega mientras la reserva sigue vigente (diez minutos); si llega tarde, debe devolver el importe. Este informe investiga, para StageOps, por qué algunos compradores recibieron entradas de butacas que ya se habían vendido a otras personas. Para ello se integraron seis exportaciones de datos\footnote{CSV: archivo de texto que representa una tabla, con una fila por línea y las columnas separadas por comas.}, se clasificó cada una de las 188\,788 reservas según esas reglas y se compararon los dos proveedores.
+
+El resultado es que 2188 reservas de EntradaLink (conciertos CON-04 y CON-06) emitieron entrada con la confirmación recibida tras la caducidad; 1195 localidades quedaron con dos entradas vigentes y 3244 compradores resultan afectados, con 187\,738 EUR cobrados que podrían requerir regularización. La incidencia aparece desde el 16/10/2026 a las 10:20 UTC, instante en que cambió la regla de validación de reservas de ese proveedor y que LumaTicket no modificó; la asociación es fuerte, pero por sí sola no prueba la causa. Se proponen tres medidas: impedir la emisión con la reserva caducada, regularizar los casos existentes y vigilar el problema de forma continua.
+\end{spacing}
+\end{abstract}
+\ifentrega\else
+\thispagestyle{empty}
+\newpage
+
+% ============================ ÍNDICE ============================
+{\setlength{\parskip}{0pt}\tableofcontents}
+\newpage
+\fi
+
+% ============================ 1. INTRODUCCIÓN ============================
+\section{Introducción}\label{sec:intro}
+StageOps coordina la venta de entradas de conciertos a través de dos compañías externas de ticketing, con los pagos procesados por una pasarela independiente. Ante reclamaciones sobre la asignación de localidades y la confirmación de compras, encargó una investigación independiente \cite{encargo} sobre seis conciertos, con datos hasta el 28/10/2026 a las 23:59:59 UTC\footnote{UTC: hora universal coordinada. Todas las fechas de los datos se expresan en ella para poder compararlas sin ambigüedad.}. Este informe responde a las cinco preguntas de la Dirección: dónde hay incidencias demostrables, qué repeticiones son legítimas, qué secuencia explica los casos, a cuántas butacas, compradores e importes afectan y qué corregir.
+
+El trabajo se hizo en una sesión de cuatro horas: cada integrante del equipo limpió un fichero en su propio cuaderno de análisis (\textit{notebook}\footnote{Notebook: documento que combina texto y código ejecutable por celdas, con los resultados debajo de cada celda; permite repetir cualquier cifra.}) y un séptimo cuaderno los integra. La estrategia consiste en unir las seis fuentes por reserva, aplicar a cada una las reglas del servicio (bloqueo de diez minutos, emisión solo con confirmación a tiempo, devolución si llega tarde), clasificarla y comparar proveedores y periodos, con Python y pandas\footnote{pandas: biblioteca de Python para trabajar con tablas de datos.} \cite{pandas} y gráficos en matplotlib \cite{mpl}. Cada unión se comprueba con \code{validate} y las cifras clave con \code{assert}\footnote{assert: instrucción que detiene el programa si una condición que debe cumplirse no se cumple; así, un error de recuento no pasa inadvertido.}.
+
+% ============================ 2. DIAGNÓSTICO ============================
+\section{Diagnóstico y evidencias}\label{sec:diag}
+\noindent
+\kpi{2188}{entradas emitidas con la reserva caducada}{rojo}\hfill
+\kpi{1195}{localidades con dos entradas vigentes}{ambar}\hfill
+\kpi{3244}{compradores afectados, sin duplicar}{azul}\hfill
+\kpi{187\,738}{EUR cobrados en esas reservas (por regularizar)}{verde}
+
+\medskip
+\begin{caja}[title={Diagnóstico}]{rojo}
+De las 188\,788 reservas, 2188 recibieron la confirmación del pago con la reserva ya caducada y, aun así, el emisor generó la entrada sin devolver el importe, cuando la regla ordena devolverlo. Ocurre solo en EntradaLink (CON-04: 1066; CON-06: 1122), con la versión 4.8.0 del emisor y desde el 16/10/2026 a las 10:20 UTC (primera emisión a las 10:20:02). En LumaTicket y en EntradaLink antes de esa hora, las 1481 confirmaciones tardías se devolvieron sin emitir entrada.
+\end{caja}
+
+\begin{figure}[!htb]
+\centering
+\begin{minipage}[b]{0.56\textwidth}\centering\figsi{informe_grafico_1.png}{\linewidth}{Gráfico 1}\end{minipage}\hfill
+\begin{minipage}[b]{0.39\textwidth}\centering\figsi{informe_grafico_2.png}{\linewidth}{Gráfico 2}\end{minipage}
+\caption{Izquierda: tratamiento de las confirmaciones tardías el 16/10/2026 en tramos de 15 minutos; CON-04 (EntradaLink) y CON-03 (LumaTicket) abrieron ventas ese día y solo EntradaLink cambió la regla a las 10:20 UTC. Derecha: entradas emitidas con la reserva caducada por concierto y proveedor (LT: LumaTicket; EL: EntradaLink).}
+\label{fig:graficos}
+\end{figure}
+
+Las confirmaciones tardías llegan con un retraso de 516 a 1063 s (ninguna normal supera los 355) y su frecuencia pasa del 1,1--1,3\,\% de referencia al 3,96\,\% en CON-04 (tras el cambio) y al 3,93\,\% en CON-06, unas tres veces más. Con la regla antigua, las 1481 tardías se devolvieron (0 con entrada); con la nueva, las 2188 emitieron entrada (0 devueltas). El daño parece, por tanto, exigir dos factores, más confirmaciones lentas y una regla que ya no las filtra, aunque la causa de las primeras no se conoce.
+
+\textbf{Repeticiones legítimas frente a conflicto real.} Son legítimos los reenvíos de notificaciones (4463 reservas; cada cobro cuenta una vez), las reservas repetidas de una misma localidad (9307 localidades, 0 con ventanas solapadas) y las reventas tras una anulación (3565); el conflicto real son las 1195 localidades con dos entradas vigentes a la vez (tabla~\ref{tab:repeticiones}, anexo).
+
+% ============================ 3. CRONOLOGÍA ============================
+\section{Cronología de un caso rastreable}\label{sec:caso}
+Primer conflicto en el tiempo: CON-04, localidad \code{S19-R18-B21}, 16/10/2026 (UTC). Reserva A: \code{RES-0108527}, pedido \code{ORD-0052099}, comprador \code{CLI-029824}, pago \code{PAY-0102429}. Reserva B: \code{RES-0108528}, \code{ORD-0052100}, \code{CLI-097702}, \code{PAY-0102430}.
+
+\begin{center}
+\begin{tikzpicture}[x=0.0125cm,y=1cm]
+% Línea de la reserva A (arriba) y de la reserva B (abajo); la escala horizontal es 1 cm = 80 s
+\draw[line width=1.6pt,azul!65] (0,1.7) -- (600,1.7);
+\draw[line width=1.6pt,rojo!70] (600,1.7) -- (792,1.7);
+\draw[line width=1.6pt,verde!70] (610,0) -- (1210,0);
+\draw[gray,dashed] (600,1.7) -- (600,0.05);
+% Marcadores de la reserva A
+\foreach \x in {0,179,600}{\node[circle,fill=azul,inner sep=1.6pt] at (\x,1.7) {};}
+\node[circle,fill=rojo,inner sep=2.2pt] at (792,1.7) {};
+% Marcadores de la reserva B
+\foreach \x in {610,774,1210}{\node[circle,fill=verde,inner sep=1.6pt] at (\x,0) {};}
+\node[circle,fill=azul,inner sep=2.2pt] at (997,0) {};
+% Etiquetas de A
+\node[anchor=south west,align=center,text width=1.9cm,font=\scriptsize] at (0,1.85) {10:20:22\\Se crea la reserva A};
+\node[anchor=north,align=center,text width=1.9cm,font=\scriptsize] at (179,1.55) {10:23:21\\Cobro de A};
+\node[anchor=south,align=center,text width=1.9cm,font=\scriptsize] at (600,1.85) {10:30:22\\\textbf{Caduca A}};
+\node[anchor=south west,align=center,text width=3.7cm,font=\scriptsize,text=rojo!80!black] at (768,1.85) {10:33:34 confirmación de A, \textbf{192 s tarde}\\10:33:36 emite \code{TKT-0101389}};
+\node[anchor=west,font=\scriptsize\bfseries,text=rojo!80!black] at (830,1.7) {A: entrada indebida};
+% Etiquetas de B
+\node[anchor=north,align=center,text width=1.9cm,font=\scriptsize] at (610,-0.15) {10:30:32\\Se crea la reserva B};
+\node[anchor=south,align=center,text width=1.9cm,font=\scriptsize] at (774,0.15) {10:33:16\\Cobro de B};
+\node[anchor=north,align=center,text width=3.2cm,font=\scriptsize] at (997,-0.15) {10:36:59 confirmación de B\\10:37:01 emite \code{TKT-0101390}};
+\node[anchor=north,align=center,text width=1.9cm,font=\scriptsize] at (1210,-0.15) {10:40:32\\Caduca B};
+\node[anchor=east,font=\scriptsize\bfseries,text=verde!70!black] at (590,0) {B: compra a tiempo};
+\end{tikzpicture}
+\end{center}
+{\footnotesize\textbf{Esquema 1.} La reserva A caduca y la butaca se libera; B la reserva diez segundos después y paga; la confirmación de A llega 192 s tarde y se emite igualmente su entrada: dos entradas vigentes para la misma butaca.\par}
+
+% ============================ 4. ALCANCE ============================
+\section{Alcance cuantitativo}\label{sec:alcance}
+Cada indicador declara su denominador (tabla~\ref{tab:alcance}). La \textit{contraparte legítima} es, en las localidades en conflicto, quien reservó tras la caducidad y compró dentro de las reglas. Los importes son cobros que, según la regla, debieron devolverse y \textbf{podrían requerir regularización}; no son pérdidas.
+
+\begin{table}[!htb]
+\centering\tabfont
+\setlength{\tabcolsep}{3pt}
+\caption{Indicadores de alcance con su denominador (comprador: \code{customer\_id} distinto).}
+\label{tab:alcance}
+\begin{tabularx}{\textwidth}{@{}Yr Y r@{}}
+\toprule
+\rowcolor{azul!14}\textbf{Indicador} & \textbf{Valor} & \textbf{Denominador} & \textbf{\%} \\
+\midrule
+Reservas con entrada indebida (993 sin conflicto de butaca) & 2188 & reservas con pago de EntradaLink desde el cambio: 55\,444 & 3,95 \\
+Localidades con dos entradas vigentes & 1195 & localidades con alguna entrada: 171\,802 & 0,70 \\
+Pedidos con alguna entrada indebida & 2116 & pedidos en el fichero: 91\,103 & 2,32 \\
+Compradores con entrada indebida & 2086 & compradores con alguna reserva: 59\,932 & 3,48 \\
+Compradores perjudicados (contraparte legítima) & 1186 & compradores con alguna reserva: 59\,932 & 1,98 \\
+Compradores afectados en total, sin duplicar & 3244 & compradores con alguna reserva: 59\,932 & 5,41 \\
+Cobrado en reservas con entrada indebida (EUR) & 187\,738 & cobrado en total: 15\,341\,969 EUR (103\,431 en localidades con doble vigencia y 84\,307 en el resto) & -- \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ============================ 5. MEDIDAS ============================
+\section{Medidas priorizadas}\label{sec:medidas}
+\begin{table}[!htb]
+\centering\tabfont
+\setlength{\tabcolsep}{3pt}
+\caption{Tres medidas por orden de urgencia, con su evidencia y su verificación.}
+\label{tab:medidas}
+\begin{tabularx}{\textwidth}{@{}cYYY@{}}
+\toprule
+\rowcolor{azul!14}\textbf{N.º} & \textbf{Medida} & \textbf{Evidencia} & \textbf{Cómo se verifica} \\
+\midrule
+\textcolor{rojo}{\textbf{1}} & \textbf{Antes de abrir ventas:} impedir la emisión con la reserva caducada (restablecer la validación de vigencia y propiedad en el emisor de EntradaLink, o revertir \code{CHG-004}). & Regla nueva: 2188 de 2188 tardías con entrada; regla antigua o LumaTicket: 0 de 1481. & En pruebas, una confirmación tardía debe acabar en devolución. En la próxima apertura: 0 entradas indebidas y 0 localidades con doble vigencia. \\
+\textcolor{ambar}{\textbf{2}} & \textbf{Regularizar lo existente:} conservar la localidad a la contraparte, y anular y devolver la entrada tardía en 1195 localidades (103\,431 EUR); decidir las 993 restantes (84\,307 EUR). & Listas con todos los identificadores, generadas por el notebook. & 0 localidades con dos entradas vigentes y cada cobro con entrada vigente o devolución. \\
+\textcolor{azul}{\textbf{3}} & \textbf{Vigilar:} alertas diarias, pruebas de regresión y despliegue gradual de cambios del emisor; pedir al proveedor el análisis de la latencia. & Tardías al 3,96\,\% y 3,93\,\% frente al 1,1--1,3\,\% de referencia. & Alertas a 0 y tardías de nuevo en torno al 1\,\%. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ============================ 6. CONCLUSIONES ============================
+\section{Conclusiones}\label{sec:conclusiones}
+Está demostrado que el problema no es general: afecta a dos de los seis conciertos, ambos de EntradaLink, y al 3,95\,\% de las reservas con pago de ese proveedor desde el cambio. El mecanismo se reconstruye con identificadores: una confirmación llega con la reserva caducada, la butaca ya se ha vendido a otra persona y el emisor genera igualmente la entrada. Que el 100\,\% de las confirmaciones tardías emita entrada con la regla actual, frente al 0\,\% con la anterior o en LumaTicket, hace de la validación de reservas la explicación más sólida, pero es una asociación contrastada con un grupo de comparación y no una causalidad probada; hace falta el código o la configuración del emisor y probar la regla anterior.
+
+Convendría confirmar con el proveedor por qué aumentan las confirmaciones tardías y qué hace \code{PAYMENT\_REFERENCE\_EXISTS}, y con el negocio si se mantiene la entrada tardía cuando la localidad no se revendió (993 casos, 84\,307 EUR) o se devuelve el importe. Los compradores son \code{customer\_id} distintos, no personas, y los datos son una simulación sin inventario completo ni accesos al recinto, por lo que el alcance se limita a la venta y la asignación.
+
+{\scriptsize
+\begin{thebibliography}{9}
+\bibitem{encargo} StageOps, Dirección de Operaciones. \textit{Encargo a consultora externa: investigación de incidencias en la venta de entradas}. Expediente SO-2026-041, 29 de octubre de 2026.
+\bibitem{anexo} StageOps, Sistemas y Plataforma de Datos. \textit{Arquitectura de datos y guía de las exportaciones}. Anexo técnico 01, 29 de octubre de 2026.
+\bibitem{pandas} pandas development team. \textit{pandas documentation}. \url{https://pandas.pydata.org/docs/}
+\bibitem{mpl} Hunter, J.~D. (2007). Matplotlib: A 2D graphics environment. \textit{Computing in Science \& Engineering}, 9(3), 90--95.
+\end{thebibliography}
+}
+
+% ============================ ANEXOS (no cuentan para el límite de páginas) ============================
+\ifentrega\else
+\clearpage
+\appendix
+
+\section{Método, fuentes y comprobaciones}\label{app:metodo}
+El anexo técnico \cite{anexo} define el modelo de información: el punto de enlace es la reserva (\code{reservation\_id}), los catálogos de conciertos y compradores se unen a las reservas y cada entrada se respalda en una captura de pago. El notebook de integración traduce ese modelo a una lista de relaciones y comprueba cada una con \code{validate}, de modo que se detiene si una clave deja de ser única en lugar de multiplicar filas en silencio. Las seis fuentes tienen 6 conciertos, 59\,932 compradores, 188\,788 reservas, 178\,043 reservas con pago, 176\,562 entradas y 6 cambios de configuración.
+
+\begin{table}[!htb]
+\centering\tabfont
+\setlength{\tabcolsep}{3pt}
+\caption{Repeticiones aparentes frente a conflicto real (una localidad es la pareja concierto y butaca).}
+\label{tab:repeticiones}
+\begin{tabularx}{\textwidth}{@{}L{4.6cm}L{2cm}Y@{}}
+\toprule
+\rowcolor{azul!14}\textbf{Situación} & \textbf{Veredicto} & \textbf{Evidencia} \\
+\midrule
+Notificaciones de pago reenviadas & \textcolor{verde}{\textbf{Legítimo}} & 4463 reservas con la captura entregada más de una vez; cada cobro se cuenta una sola vez (cobrado: 15\,341\,969 EUR). \\
+Localidad reservada varias veces & \textcolor{verde}{\textbf{Legítimo}} & 9307 localidades con más de una reserva y 0 reservas con ventana solapada. \\
+Localidad revendida tras anular la entrada & \textcolor{verde}{\textbf{Legítimo}} & 3565 localidades; la entrada anterior se anuló antes de emitir la siguiente. \\
+Dos entradas vigentes a la vez & \textcolor{rojo}{\textbf{Conflicto real}} & 1195 localidades (CON-04: 560; CON-06: 635) y 2390 entradas, todas con la versión 4.8.0. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[!htb]
+\centering\tabfont
+\setlength{\tabcolsep}{3pt}
+\caption{Relaciones comprobadas entre las tablas (todas cumplen su cardinalidad y ninguna tiene filas huérfanas).}
+\label{tab:relaciones}
+\begin{tabular}{@{}L{3.4cm}L{3.4cm}L{2.6cm}L{2.2cm}rr@{}}
+\toprule
+\rowcolor{azul!14}\textbf{Tabla hijo} & \textbf{Tabla padre} & \textbf{Clave} & \textbf{Cardinalidad} & \textbf{Filas} & \textbf{Huérfanas} \\
+\midrule
+\code{reservations} & \code{concerts} & \code{concert\_id} & muchos a uno & 188\,788 & 0 \\
+\code{reservations} & \code{customers} & \code{customer\_id} & muchos a uno & 188\,788 & 0 \\
+\code{payment\_by\_reservation} & \code{reservations} & \code{reservation\_id} & uno a uno & 178\,043 & 0 \\
+\code{tickets} & \code{reservations} & \code{reservation\_id} & uno a uno & 176\,562 & 0 \\
+\code{tickets} & \code{concerts} & \code{concert\_id} & muchos a uno & 176\,562 & 0 \\
+\code{tickets} & \code{payment\_by\_reservation} & \code{payment\_id} & uno a uno & 176\,562 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Cada reserva se clasifica en un único estado (tabla~\ref{tab:estados}); si alguna no encajara, el notebook se detiene. Además, 16 comprobaciones con \code{assert} verifican que las cifras clave coinciden por caminos distintos (por ejemplo, el cobrado de la tabla maestra frente al de la tabla de pagos) y todas se superan. Entre los hallazgos secundarios, 10\,745 reservas no tienen pago, lo que se interpreta como reservas que caducaron sin confirmación.
+
+\begin{table}[!htb]
+\centering\tabfont
+\setlength{\tabcolsep}{3pt}
+\caption{Estado de las 188\,788 reservas por proveedor, con el dinero cobrado y devuelto. EL: EntradaLink; LT: LumaTicket.}
+\label{tab:estados}
+\begin{tabularx}{\textwidth}{@{}Yrrrrr@{}}
+\toprule
+\rowcolor{azul!14}\textbf{Estado de la reserva} & \textbf{EL} & \textbf{LT} & \textbf{Total} & \textbf{Cobrado (EUR)} & \textbf{Devuelto (EUR)} \\
+\midrule
+Sin pago: caducó sin confirmación & 5411 & 5334 & 10\,745 & 0 & 0 \\
+Confirmada a tiempo, con entrada vigente & 86\,942 & 83\,867 & 170\,809 & 14\,719\,161 & 0 \\
+Confirmada a tiempo, entrada anulada y devuelta & 1832 & 1733 & 3565 & 308\,793 & 308\,793 \\
+Tardía, devuelta sin emitir entrada (correcto) & 448 & 1033 & 1481 & 126\,277 & 126\,277 \\
+\rowcolor{rojo!10}Tardía, con entrada emitida (incumple) & 2188 & 0 & 2188 & 187\,738 & 0 \\
+\midrule
+\textbf{Total} & 96\,821 & 91\,967 & 188\,788 & 15\,341\,969 & 435\,070 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Problemas encontrados}\label{app:problemas}
+La tabla~\ref{tab:problemas} separa lo que se observó al cruzar los ficheros de lo que se interpretó y de la decisión adoptada, para que cada cifra del informe pueda discutirse.
+
+\begin{table}[!htb]
+\centering\tabfont
+\setlength{\tabcolsep}{3pt}
+\caption{Problemas encontrados al combinar las fuentes y grado de certeza.}
+\label{tab:problemas}
+\begin{tabularx}{\textwidth}{@{}L{4.7cm}L{4.6cm}Y@{}}
+\toprule
+\rowcolor{azul!14}\textbf{Observación} & \textbf{Interpretación} & \textbf{Decisión y motivo} \\
+\midrule
+Las fechas de \code{reservations} usan espacio y \code{+00:00} en lugar de \code{T} y \code{Z}; solo \code{customers} y \code{tickets} conservan la marca de orden de bytes (BOM). & Los ficheros proceden de cuadernos distintos sin un formato común; es una diferencia de forma, no de contenido (no confirmado con sus autores). & Normalizar al cargar (lectura \code{utf-8-sig}, fechas a UTC con una sola resolución) sin modificar los CSV originales. \\
+El mismo concepto de pago se llama \code{occurred\_at}, \code{captured\_at} o \code{capture\_occurred\_at} según el fichero. & Cada notebook eligió su propio vocabulario. & Renombrar en la carga a \code{<evento>\_<campo>} y auditar el esquema (minúsculas, \code{\_at} para instantes y \code{\_eur} para importes). \\
+Unir los pagos por entregas multiplicaría las 4463 reservas cuya captura se entregó más de una vez. & Los reenvíos son copias de la misma notificación, no cobros nuevos. & Unir desde la tabla por reserva (una fila por reserva, 178\,043) con \code{validate} uno a uno. \\
+Una lectura inicial atribuía el problema solo al cambio de regla; por concierto, las confirmaciones tardías también pasan de 1,1--1,3\,\% a 3,96\,\% y 3,93\,\%. & Hacen falta dos factores (más confirmaciones lentas y una regla que no las filtra); la causa del aumento es desconocida. & Reformular el diagnóstico y pedir al proveedor los registros de latencia. \\
+La entrada se emite siempre 2 s tras la primera recepción (176\,562 de 176\,562); las tardías tardan 516 a 1063 s y ninguna normal pasa de 355 s. & Regularidad propia de datos de simulación; no se extrapola a sistemas reales. & Tomar la primera recepción como reloj de la regla y no sobreinterpretar la regularidad. \\
+Hay 10\,745 reservas sin pago. & Caducaron sin confirmación, coherente con el encargo, aunque ningún registro lo prueba de forma independiente. & Clasificarlas como correctas y marcarlo como interpretación. \\
+\code{customer\_id} identifica al comprador, no a cada asistente. & Un comprador puede aparecer en varias reservas. & Contar \code{customer\_id} distintos y llamarlos compradores, no personas. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\fi
+
+\end{document}
