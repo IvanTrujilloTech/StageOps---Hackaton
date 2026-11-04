@@ -1,0 +1,10 @@
+indicador,definición,valor,denominador,valor_denominador,%
+Reservas con entrada indebida,reservas cuya confirmación llegó con la reserva caducada y emitieron entrada,2188,reservas con pago de EL desde CHG-004,55444,3.946324219031816
+Entradas indebidas,una por reserva anterior (relación 1:0..1),2188,entradas emitidas en EL,90962,2.405400057166729
+Localidades con dos entradas vigentes,pares concert_id + seat_id con intervalos de vigencia solapados,1195,localidades con alguna entrada,171802,0.6955681540377877
+Entradas implicadas en esos conflictos,las dos de cada localidad en conflicto,2390,entradas emitidas,176562,1.3536321518786603
+Entradas indebidas sin conflicto de butaca,entrada indebida cuya localidad no se volvió a vender,993,entradas indebidas,2188,45.38391224862888
+Pedidos con alguna entrada indebida,order_id distintos de las reservas indebidas,2116,pedidos en el fichero,91103,2.322645796516031
+Compradores con alguna entrada indebida,customer_id distintos de las reservas indebidas,2086,compradores con alguna reserva,59932,3.4806113595408132
+Compradores contraparte (perjudicados),customer_id distintos de la otra entrada vigente de cada conflicto,1186,compradores con alguna reserva,59932,1.9789094306881132
+Compradores afectados en total (sin duplicar),unión de ambos conjuntos,3244,compradores con alguna reserva,59932,5.41280117466462
