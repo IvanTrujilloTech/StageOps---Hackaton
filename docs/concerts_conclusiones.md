@@ -1,6 +1,6 @@
 # concerts: conclusiones y guía de uso del CSV limpio
 
-Origen: `data/raw/concerts.csv` · Notebook: `notebooks/03_analisis_concerts.ipynb` · Salida: `data/clean/concerts_clean.csv` (se regenera ejecutando el notebook).
+Origen: `data/raw/concerts.csv` · Notebook: `notebooks/03_analisis_concerts.ipynb` · Salida: `data/clean/concerts_clean.csv` (versionado en git; se regenera ejecutando el notebook).
 
 ## 1. Resumen en una frase
 
