@@ -1,20 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-test.py - Auditoría de calidad de datos de customers.csv
-StageOps SO-2026-041
+tests/comprobar_errores_customers.py
 
-Arquitectura inspirada en el script de referencia (carga inicial con dtype,
-inspección, métricas de completitud, validaciones paso a paso con comprobante,
-y tabla de calidad final).
+Auditoría de calidad de datos de customers.csv usando el sistema de comprobantes.
+Solo lectura: no modifica el CSV original.
 
-Solo lectura: no se modifica el CSV original.
+Arquitectura inspirada en el script de referencia:
+  - Carga inicial con dtype declarado.
+  - Inspección inicial (describe / dtypes).
+  - Métrica de completitud antes de la auditoría.
+  - Validaciones paso a paso con variable 'comprobante' que avanza solo si pasa.
+  - Tabla de calidad final (original vs estado auditado).
 """
+from pathlib import Path
 import pandas as pd
 import re
 
-CSV_PATH = "data/raw/customers.csv"
+CSV_PATH = Path("data/raw/customers.csv")
 
-# Carga inicial con tipos declarados (como el reference)
+# ---------------------------------------------------------------------------
+# Carga inicial (solo lectura)
+# ---------------------------------------------------------------------------
 df = pd.read_csv(
     CSV_PATH,
     dtype={
@@ -27,7 +33,25 @@ df = pd.read_csv(
     keep_default_na=False,
     na_values=[""],
 )
+
 df_original = df.copy()
+total_filas = len(df)
+columnas = list(df.columns)
+
+print(f"Archivo: {CSV_PATH.resolve()}")
+print(f"Filas totales: {total_filas:,}")
+print(f"Columnas: {columnas}\n")
+
+errores = []
+advertencias = []
+
+def registrar(tipo, mensaje):
+    if tipo == "error":
+        errores.append(mensaje)
+        print(f"[ERROR] {mensaje}")
+    else:
+        advertencias.append(mensaje)
+        print(f"[AVISO] {mensaje}")
 
 # ---------------------------------------------------------------------------
 # Inspección inicial
@@ -50,124 +74,167 @@ def calcular_completitud(df_analizar, momento):
         print(f"Columna {col}: {completitud:.2f}%")
 
 # ---------------------------------------------------------------------------
-# Validaciones paso a paso (solo lectura, estilo comprobante del reference)
+# Validaciones con sistema de comprobantes
 # ---------------------------------------------------------------------------
 def validar_customer_id():
     comprobante = 0
     print("\n--- Validación: customer_id ---")
 
-    es_numero_puro = df["customer_id"].str.match(r"^CLI-\d{5,}$", na=False)
-    n_invalido = int((~es_numero_puro).sum())
-    print(f"customer_id con formato inválido: {n_invalido}")
-    if n_invalido == 0:
-        print("customer_id verificado como texto limpio (CLI-##### / CLI-######)")
-        comprobante = 1
+    cid = df["customer_id"].astype(str).str.strip()
+
+    # 1. Vacíos
+    n_vacios = int((cid == "").sum())
+    if n_vacios > 0:
+        registrar("error", f"customer_id vacío: {n_vacios} filas")
     else:
-        print("Error: customer_id tiene formatos inválidos")
-        comprobante = 0
+        print("  customer_id sin celdas vacías: OK")
+        comprobante = 1
 
+    # 2. Formato consistente CLI-<números>
     if comprobante == 1:
-        n_vacios = int((df["customer_id"] == "").sum())
-        print(f"customer_id vacío: {n_vacios}")
-        if n_vacios == 0:
-            print("customer_id sin celdas vacías")
+        patron = cid.str.extract(r"^CLI-(\d+)$")[0]
+        valido_formato = patron.notna()
+        n_formato_invalido = int((~valido_formato).sum())
+        if n_formato_invalido > 0:
+            filas_invalidas = df.loc[~valido_formato, "customer_id"].head(10).tolist()
+            registrar("error", f"customer_id con formato inválido (no es CLI-<números>): {n_formato_invalido} filas. Ejemplos: {filas_invalidas}")
+        else:
+            print("  customer_id con formato CLI-<números>: OK")
             comprobante = 2
-        else:
-            print("Error: customer_id con celdas vacías")
-            comprobante = 0
 
+    # 3. Longitud de sufijo consistente
     if comprobante == 2:
-        n_duplicados = int(df["customer_id"].duplicated(keep="first").sum())
-        print(f"customer_id duplicados: {n_duplicados}")
-        if n_duplicados == 0:
-            print("customer_id sin duplicados (clave primaria OK)")
-            comprobante = 3
+        longitudes = patron[valido_formato].str.len()
+        long_unica = longitudes.unique()
+        if len(long_unica) > 1:
+            contador_long = longitudes.value_counts().to_dict()
+            registrar("error", f"customer_id con longitudes de sufijo inconsistentes: {contador_long}")
         else:
-            print("Error: customer_id duplicados encontrados")
-            comprobante = 0
+            print(f"  Longitud de sufijo numérico consistente: {long_unica[0]} dígitos: OK")
+            comprobante = 3
 
-    return comprobante, n_invalido
+    # 4. Sin duplicados (clave primaria)
+    if comprobante == 3:
+        n_dup = int(cid.duplicated(keep=False).sum())
+        if n_dup > 0:
+            registrar("error", f"customer_id duplicado: {n_dup} filas")
+        else:
+            print("  customer_id sin duplicados (clave primaria): OK")
+            comprobante = 4
+
+    # 5. Secuencia incremental y gaps
+    if comprobante == 4:
+        numeros = patron.astype(int)
+        min_n = int(numeros.min())
+        max_n = int(numeros.max())
+        esperado = set(range(min_n, max_n + 1))
+        presentes = set(numeros.tolist())
+        faltantes = sorted(esperado - presentes)
+        print(f"  Rango incremental: {min_n} a {max_n} (esperados: {max_n - min_n + 1:,}, presentes: {len(presentes):,})")
+        if faltantes:
+            registrar("error", f"Gaps en secuencia incremental customer_id: {len(faltantes)} entradas faltantes. Primeros 10: {faltantes[:10]}")
+        else:
+            print("  Secuencia incremental sin gaps: OK")
+            comprobante = 5
+
+    return comprobante, len(errores), len(advertencias)
 
 
 def validar_nombres():
     comprobante = 0
     print("\n--- Validación: first_name y last_name ---")
 
-    n_fn_vacio = int((df["first_name"] == "").sum())
-    n_ln_vacio = int((df["last_name"] == "").sum())
-    print(f"first_name vacío: {n_fn_vacio}")
-    print(f"last_name vacío: {n_ln_vacio}")
-    if n_fn_vacio == 0 and n_ln_vacio == 0:
-        print("Nombres sin celdas vacías")
-        comprobante = 1
-    else:
-        print("Error: first_name o last_name con celdas vacías")
-        comprobante = 0
+    for col in ["first_name", "last_name"]:
+        s = df[col].astype(str).str.strip()
+        n_vac = int((s == "").sum())
+        if n_vac > 0:
+            registrar("error", f"{col} vacío: {n_vac} filas")
+        else:
+            print(f"  {col} sin celdas vacías: OK")
 
-    return comprobante, n_fn_vacio, n_ln_vacio
+    if comprobante == 0:
+        comprobante = 1
+
+    # caracteres inusuales
+    for col in ["first_name", "last_name"]:
+        s = df[col].astype(str).str.strip()
+        mascara_rara = ~s.str.match(r"^[\wáéíóúÁÉÍÓÚñÑ\s'\-\.]+$", na=False)
+        n_rara = int(mascara_rara.sum())
+        if n_rara > 0:
+            ejemplos = df.loc[mascara_rara, col].head(10).tolist()
+            registrar("advertencia", f"{col} con caracteres inusuales: {n_rara} filas. Ejemplos: {ejemplos}")
+
+    comprobante = 2
+
+    # Homónimos
+    nombre_completo = (
+        df["first_name"].str.strip().str.lower()
+        + " | "
+        + df["last_name"].str.strip().str.lower()
+    )
+    mascara_hom = nombre_completo.duplicated(keep=False) & (df["first_name"] != "") & (df["last_name"] != "")
+    n_hom = int(mascara_hom.sum())
+    if n_hom > 0:
+        n_grupos_hom = int(nombre_completo[mascara_hom].nunique())
+        registrar("advertencia", f"Homónimos: {n_hom} filas en {n_grupos_hom} grupos (mismo nombre+apellido, distinto customer_id). El anexo permite homónimos.")
+    else:
+        print("  Sin homónimos: OK")
+
+    return comprobante, n_hom if 'n_hom' in locals() else 0
 
 
 def validar_email():
     comprobante = 0
     print("\n--- Validación: email ---")
 
-    email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-    es_valido = df["email"].str.match(email_re, na=False)
-    n_formato = int((~es_valido & (df["email"] != "")).sum())
-    n_vacio = int((df["email"] == "").sum())
-    print(f"email con formato inválido: {n_formato}")
-    print(f"email vacío: {n_vacio}")
-    if n_formato == 0 and n_vacio == 0:
-        print("email con formato válido")
-        comprobante = 1
+    email = df["email"].astype(str).str.strip()
+
+    # 1. Vacíos
+    n_vac = int((email == "").sum())
+    if n_vac > 0:
+        registrar("error", f"email vacío: {n_vac} filas")
     else:
-        print("Error: email con formato inválido o vacío")
-        comprobante = 0
+        print("  email sin celdas vacías: OK")
+        comprobante = 1
 
+    # 2. Formato válido
     if comprobante == 1:
-        dominio_valido = df["email"].str.split("@").str[1].str.lower().eq("example.com")
-        n_dominio = int((~dominio_valido & (df["email"] != "")).sum())
-        print(f"email con dominio distinto a @example.com: {n_dominio}")
-        if n_dominio == 0:
-            print("email con dominio @example.com correcto")
+        email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+        valido_fmt = email.str.match(email_re)
+        n_fmt = int((~valido_fmt & (email != "")).sum())
+        if n_fmt > 0:
+            ejemplos = email.loc[~valido_fmt & (email != "")].head(10).tolist()
+            registrar("error", f"email con formato inválido: {n_fmt} filas. Ejemplos: {ejemplos}")
+        else:
+            print("  email con formato válido: OK")
             comprobante = 2
-        else:
-            print("Error: email con dominio no esperado")
-            comprobante = 0
 
+    # 3. Dominio @example.com
     if comprobante == 2:
-        n_duplicados = int(df["email"].duplicated(keep="first").sum())
-        print(f"email duplicados: {n_duplicados}")
-        if n_duplicados == 0:
-            print("email sin duplicados")
-            comprobante = 3
+        dominio = email.str.split("@").str[1].str.lower()
+        n_dom = int((dominio != "example.com").sum())
+        if n_dom > 0:
+            ejemplos = email.loc[dominio != "example.com"].head(10).tolist()
+            registrar("error", f"email con dominio distinto a @example.com: {n_dom} filas. Ejemplos: {ejemplos}")
         else:
-            print("Error: email duplicados encontrados")
-            comprobante = 0
+            print("  email con dominio @example.com: OK")
+            comprobante = 3
 
-    return comprobante, n_formato, n_vacio, n_duplicados if comprobante == 3 else 0
+    # 4. Sin duplicados
+    if comprobante == 3:
+        n_dup_email = int(email.duplicated(keep=False).sum())
+        if n_dup_email > 0:
+            registrar("error", f"email duplicado: {n_dup_email} filas")
+        else:
+            print("  email sin duplicados: OK")
+            comprobante = 4
+
+    return comprobante
 
 
-def detectar_homonimos():
-    print("\n--- Detección: homónimos (advertencia) ---")
-    nombre_completo = (
-        df["first_name"].str.strip().str.lower()
-        + " | "
-        + df["last_name"].str.strip().str.lower()
-    )
-    mascara = nombre_completo.duplicated(keep=False) & (df["first_name"] != "") & (df["last_name"] != "")
-    n_homonimos = int(mascara.sum())
-    print(f"Registros con homónimos (mismo nombre+apellido, distinto customer_id): {n_homonimos}")
-    print("Nota: el anexo permite homónimos; no usar nombre+apellido como clave de unión.")
-    return n_homonimos
-
-# ---------------------------------------------------------------------------
-# Tabla de calidad (sobre el original, como no hay limpieza que modifique)
-# ---------------------------------------------------------------------------
 def calcular_tabla_calidad(df_original):
     tot = len(df_original)
     comp = (df_original.notna().sum().sum() / (tot * len(df_original.columns))) * 100
-
     dupl_id = int(df_original["customer_id"].duplicated().sum())
     unic = ((tot - dupl_id) / tot) * 100
 
@@ -179,35 +246,34 @@ def calcular_tabla_calidad(df_original):
     print("=" * 58)
 
 # ---------------------------------------------------------------------------
-# Ejecución en secuencia (como el reference)
+# Ejecución en secuencia
 # ---------------------------------------------------------------------------
 calcular_completitud(df_original, "Antes de la auditoría")
-
 initial_inspection()
 
-c1, err_id = validar_customer_id()
-c2, err_fn, err_ln = validar_nombres()
-c3, err_email_fmt, err_email_vac, err_email_dup = validar_email()
-n_hom = detectar_homonimos()
+c1, _, _ = validar_customer_id()
+c2, _ = validar_nombres()
+c3 = validar_email()
 
 calcular_tabla_calidad(df_original)
 
-# Resumen final de errores importantes
-print("\n================ RESUMEN DE ERRORES IMPORTANTES ================")
-resumen = [
-    ("customer_id formato inválido", err_id),
-    ("customer_id vacío", int((df["customer_id"] == "").sum())),
-    ("customer_id duplicado", int(df["customer_id"].duplicated().sum())),
-    ("first_name vacío", err_fn),
-    ("last_name vacío", err_ln),
-    ("email formato inválido", err_email_fmt),
-    ("email vacío", err_email_vac),
-    ("email dominio != @example.com", int((~df["email"].str.split("@").str[1].str.lower().eq("example.com") & (df["email"] != "")).sum())),
-    ("email duplicado", err_email_dup),
-    ("Homónimos (advertencia, no error)", n_hom),
-]
-for nombre, cantidad in resumen:
-    marca = " <--- IMPORTANTE" if cantidad > 0 and "Homónimos" not in nombre else ""
-    print(f"  {nombre:<45} {cantidad:>6,}{marca}")
+print("\n" + "=" * 70)
+print("RESUMEN FINAL DE AUDITORÍA")
+print("=" * 70)
+print(f"  Total errores: {len(errores)}")
+print(f"  Total advertencias: {len(advertencias)}")
 
+if errores:
+    print("\nERRORES ENCONTRADOS:")
+    for e in errores:
+        print(f"  - {e}")
+else:
+    print("\nNo se encontraron errores importantes.")
+
+if advertencias:
+    print("\nADVERTENCIAS:")
+    for a in advertencias:
+        print(f"  - {a}")
+
+print(f"\nComprobantes finales: customer_id={c1}, nombres={c2}, email={c3}")
 print("\nNota: el CSV original no se modificó.")
